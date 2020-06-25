@@ -1,25 +1,26 @@
 #include <time.h>
 
-#include "structs.h"
+extern const char* retprintf(const char*, ...);
 
-Clock
-datetime()
+static const char* Months[12]={"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
+static const char* WeekDays[7]={"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
+static const char* ampmstyle[2]={"am","pm"};
+
+const char*
+datetime(void)
 {
-	Clock ret;
+	int pm;
 	struct timespec precise;
-	clock_gettime(CLOCK_REALTIME, &precise);
 	struct tm local;
+	clock_gettime(CLOCK_REALTIME, &precise);
 	local = *localtime(&precise.tv_sec);
-	ret.mon = local.tm_mon;
-	ret.mday = local.tm_mday;
-	ret.wday = local.tm_wday;
-	ret.hour = local.tm_hour;
-	ret.min = local.tm_min;
-	ret.sec = local.tm_sec;
-	ret.is_pm = ret.hour>=12 ? 1:0;
-	ret.hour -= 12*ret.is_pm;
-	if (ret.hour == 0)
-		ret.hour = 12;
-	return ret;
+	pm = local.tm_hour>=12 ? 1:0;
+	local.tm_hour -= 12*pm;
+	if (local.tm_hour == 0)
+		local.tm_hour = 12;
+
+	return retprintf("%s %s %d %d:%02d %s", WeekDays[local.tm_wday], \
+	    Months[local.tm_mon], local.tm_mday, local.tm_hour, local.tm_min, \
+	    ampmstyle[pm]);
 }
 

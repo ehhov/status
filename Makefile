@@ -1,4 +1,4 @@
-PREFIX = ~/.local
+PREFIX = /opt/local
 
 CC = gcc
 LIBS = -lX11 -lpthread -lpulse
@@ -9,7 +9,7 @@ OBJ = ${SRC:.c=.o}
 
 all: dwms tint2s
 
-%.o: %.c structs.h
+%.o: %.c
 	${CC} -c ${FLAGS} -o $@ $<
 
 dwms: dwms.o ${OBJ} dwms.h tuning.h

@@ -4,18 +4,34 @@
 #include <sys/select.h>
 
 extern int done;
-extern void die(const char*, ...);
 extern void refresh(void);
+extern void die(const char*, ...);
+extern const char* retprintf(const char*, ...);
+
+static const char* Xkb_text[]={"us","ru"};
+static const char* Xkb_icon[]={"🇺🇸","🇷🇺"};
+static int layout = 0; /* we don't know it before the first event... */
+
+const char*
+layout_text(void)
+{
+	return Xkb_text[layout];
+}
+
+const char*
+layout_icon(void)
+{
+	return Xkb_icon[layout];
+}
 
 void*
-capture_layout(void* voidlayout)
+layout_start(void* unused)
 {
 	Display* d;
 	XEvent e;
 	XkbEvent* ke;
 	int fd;
 	fd_set fds;
-	int* layout = voidlayout;
 
 	d = XOpenDisplay(NULL);
 	if (d == NULL) {
@@ -27,7 +43,7 @@ capture_layout(void* voidlayout)
 		goto close;
 	}
 	if (!XkbSelectEventDetails(d, XkbUseCoreKbd, XkbStateNotify, \
-				XkbGroupStateMask, XkbGroupStateMask)) {
+	        XkbGroupStateMask, XkbGroupStateMask)) {
 		die("layout thread failed to select X event details.");
 		goto close;
 	}
@@ -43,8 +59,8 @@ capture_layout(void* voidlayout)
 		while (XPending(d)) {
 			XNextEvent(d, &e);
 			ke = (XkbEvent*) &e;
-			if (ke->state.group != *layout) {
-				*layout = ke->state.group;
+			if (ke->state.group != layout) {
+				layout = ke->state.group;
 				refresh();
 			}
 		}

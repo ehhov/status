@@ -5,4 +5,9 @@ status is a program in C that can print device information for dwm
 (dwms) or tint2 (tint2s). It works for me and as soon as I need 
 something new, I try to implement it.
 
+
+Requirements
+------------
+In order to build status you need the Xlib and PulseAudio header files.
+
 Any comments are appreciated.

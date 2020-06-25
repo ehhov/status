@@ -1,67 +1,73 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "structs.h"
-
 extern void die(const char*, ...);
+extern const char* retprintf(const char*, ...);
 
-static const int len = 50;
+static int percent; /* only for tint2 */
 
-Battery
+const char*
 battery(const char* bat)
 {
-	FILE* file;
 	int now, full, current;
-	char path[len], chr[12];
-	Battery ret;
-	
-	snprintf(path, len, "/sys/class/power_supply/%s/charge_now", bat);
+	char path[50], chr[12];
+	FILE* file;
+
+	snprintf(path, sizeof(path), "/sys/class/power_supply/%s/charge_now", bat);
 	file = fopen(path, "r");
 	if (file == NULL) {
-		die("file does not exist (%s).", path);
-		return ret;
+		die("file does not exist (%s). check the argument (%s).", path, bat);
+		return NULL;
 	}
 	fscanf(file, "%d", &now);
 	fclose(file);
-	
-	snprintf(path, len, "/sys/class/power_supply/%s/charge_full", bat);
+
+	snprintf(path, sizeof(path), "/sys/class/power_supply/%s/charge_full", bat);
 	file = fopen(path, "r");
 	if (file == NULL) {
-		die("file does not exist (%s).", path);
-		return ret;
+		die("file does not exist (%s). check the argument (%s).", path, bat);
+		return NULL;
 	}
 	fscanf(file, "%d", &full);
 	fclose(file);
 
-	snprintf(path, len, "/sys/class/power_supply/%s/current_now", bat);
+	snprintf(path, sizeof(path), "/sys/class/power_supply/%s/current_now", bat);
 	file = fopen(path, "r");
 	if (file == NULL) {
-		die("file does not exist (%s).", path);
-		return ret;
+		die("file does not exist (%s). check the argument (%s).", path, bat);
+		return NULL;
 	}
 	fscanf(file, "%d", &current);
 	fclose(file);
 	if (current == 0) current = 1;
 
-	snprintf(path, len, "/sys/class/power_supply/%s/status", bat);
+	snprintf(path, sizeof(path), "/sys/class/power_supply/%s/status", bat);
 	file = fopen(path, "r");
 	if (file == NULL) {
-		die("file does not exist (%s).", path);
-		return ret;
+		die("file does not exist (%s). check the argument (%s).", path, bat);
+		return NULL;
 	}
 	fscanf(file, "%12s", &chr[0]);
 	fclose(file);
-	if (strcmp(chr, "Charging")) ret.is_chr = 0;
-	else ret.is_chr = 1;
 
-	if (ret.is_chr == 1) {
-		ret.hours = (full-now) / current;
-		ret.mins = (full-now) % current * 60 / current;
-	}	else {
-		ret.hours = now / current;
-		ret.mins = now % current * 60 / current;
+	if (!strcmp(chr, "Full")) {
+		snprintf(chr, 12, " %s", "Full");
+	} else if (!strcmp(chr, "Charging")) {
+		snprintf(chr, 12, "+ %02d:%02d", (full-now) / current, \
+		    (full-now) % current * 60 / current);
+	} else {
+		snprintf(chr, 12, " %02d:%02d", now / current, \
+		    now % current * 60 / current);
 	}
-	ret.percent = now * 100.0 / full;
 
-	return ret;
+	percent = 100 * now / full; /* only for tint2 */
+
+	return retprintf("%.2lf%%%s", 100.0 * now / full, chr);
+}
+
+/* only for tint2 */
+int
+battery_percent(void)
+{
+	return percent;
 }
