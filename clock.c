@@ -1,12 +1,12 @@
 #include <time.h>
 
-extern const char* retprintf(const char*, ...);
+extern const char *retprintf(const char *fmt, ...);
 
-static const char* Months[12]={"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
-static const char* WeekDays[7]={"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
-static const char* ampmstyle[2]={"am","pm"};
+static const char *Months[12]={"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
+static const char *WeekDays[7]={"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
+static const char *ampmstyle[2]={"am","pm"};
 
-const char*
+const char *
 datetime(void)
 {
 	int pm;

@@ -9,16 +9,16 @@
 #include <sys/socket.h>
 #include <linux/wireless.h>
 
-extern void die(const char*, ...);
-extern const char* retprintf(const char*, ...);
+extern void die(const char *fmt, ...);
+extern const char *retprintf(const char *fmt, ...);
 
-const char*
-netspeed(const char* wlan)
+const char *
+netspeed(const char *wlan)
 {
 	static long int in1, in2, out1, out2;
 	static struct timespec now, old;
 	char path[50];
-	FILE* file;
+	FILE *file;
 
 	old=now;
 	clock_gettime(CLOCK_MONOTONIC, &now);
@@ -48,8 +48,8 @@ netspeed(const char* wlan)
 	      - old.tv_sec - old.tv_nsec*1e-9));
 }
 
-const char*
-essid(const char* wlan)
+const char *
+essid(const char *wlan)
 {
 	static char name[IW_ESSID_MAX_SIZE+1];
 	int skfd;

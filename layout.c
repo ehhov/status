@@ -5,31 +5,30 @@
 
 extern int done;
 extern void refresh(void);
-extern void die(const char*, ...);
-extern const char* retprintf(const char*, ...);
+extern void die(const char *fmt, ...);
+extern const char *retprintf(const char *fmt, ...);
 
-static const char* Xkb_text[]={"us","ru"};
-static const char* Xkb_icon[]={"🇺🇸","🇷🇺"};
+static const char *Xkb_text[]={"us","ru"};
+static const char *Xkb_icon[]={"🇺🇸","🇷🇺"};
 static int layout = 0; /* we don't know it before the first event... */
 
-const char*
+const char *
 layout_text(void)
 {
 	return Xkb_text[layout];
 }
 
-const char*
+const char *
 layout_icon(void)
 {
 	return Xkb_icon[layout];
 }
 
-void*
-layout_start(void* unused)
+void *
+layout_start(void *unused)
 {
-	Display* d;
+	Display *d;
 	XEvent e;
-	XkbEvent* ke;
 	int fd;
 	fd_set fds;
 
@@ -58,7 +57,7 @@ layout_start(void* unused)
 		select(fd + 1, &fds, NULL, NULL, NULL);
 		while (XPending(d)) {
 			XNextEvent(d, &e);
-			ke = (XkbEvent*) &e;
+			XkbEvent *ke = (XkbEvent *) &e;
 			if (ke->state.group != layout) {
 				layout = ke->state.group;
 				refresh();

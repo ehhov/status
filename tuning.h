@@ -4,8 +4,8 @@ static const int show_description = 1;
 static const int interval = 5;
 
 /* Variables */
-static const char* bat = "BAT0";
-static const char* wlan = "wlp58s0";
+static const char *bat = "BAT0";
+static const char *wlan = "wlp58s0";
 
 /*
 --------------------- NOTES ---------------------

@@ -10,7 +10,6 @@
 #include "tint2s.h"
 #include "tuning.h"
 
-/* global variables */
 int done = 0;
 static int changed = 0;
 static pthread_t status_thread;
@@ -23,7 +22,7 @@ refresh()
 }
 
 void
-die(const char* fmt, ...)
+die(const char *fmt, ...)
 {
 	va_list arg;
 
@@ -36,8 +35,8 @@ die(const char* fmt, ...)
 	refresh();
 }
 
-const char*
-retprintf(const char* fmt, ...)
+const char *
+retprintf(const char *fmt, ...)
 {
 	static char str[1024];
 	int r;

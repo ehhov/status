@@ -1,17 +1,17 @@
 #include <stdio.h>
 #include <string.h>
 
-extern void die(const char*, ...);
-extern const char* retprintf(const char*, ...);
+extern void die(const char *fmt, ...);
+extern const char *retprintf(const char *fmt, ...);
 
 static int percent; /* only for tint2 */
 
-const char*
-battery(const char* bat)
+const char *
+battery(const char *bat)
 {
 	int now, full, current;
 	char path[50], chr[12];
-	FILE* file;
+	FILE *file;
 
 	snprintf(path, sizeof(path), "/sys/class/power_supply/%s/charge_now", bat);
 	file = fopen(path, "r");
@@ -51,7 +51,7 @@ battery(const char* bat)
 	fclose(file);
 
 	if (!strcmp(chr, "Full")) {
-		snprintf(chr, 12, " %s", "Full");
+		strcpy(chr, " Charged");
 	} else if (!strcmp(chr, "Charging")) {
 		snprintf(chr, 12, "+ %02d:%02d", (full-now) / current, \
 		    (full-now) % current * 60 / current);
