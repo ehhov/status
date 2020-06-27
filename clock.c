@@ -12,8 +12,9 @@ datetime(void)
 	int pm;
 	struct timespec precise;
 	struct tm local;
+	/* usual time_t and time() is 0.0...01 second slow */
 	clock_gettime(CLOCK_REALTIME, &precise);
-	local = *localtime(&precise.tv_sec);
+	localtime_r(&precise.tv_sec, &local);
 	pm = local.tm_hour>=12 ? 1:0;
 	local.tm_hour -= 12*pm;
 	if (local.tm_hour == 0)
@@ -23,4 +24,3 @@ datetime(void)
 	    Months[local.tm_mon], local.tm_mday, local.tm_hour, local.tm_min, \
 	    ampmstyle[pm]);
 }
-
