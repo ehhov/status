@@ -1,8 +1,8 @@
 PREFIX = /opt/local
 
-CC = gcc
+CC = cc
 LIBS = -lX11 -lpthread -lpulse
-FLAGS = -std=c99 -Wall -pedantic -Os -D_DEFAULT_SOURCE -D_POSIX_C_SOURCE=2
+FLAGS = -std=c99 -Wall -pedantic -Os -D_POSIX_C_SOURCE=200809L
 SRC = battery.c clock.c layout.c network.c volume.c
 OBJ = ${SRC:.c=.o}
 
