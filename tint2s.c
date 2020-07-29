@@ -31,7 +31,7 @@ die(const char *fmt, ...)
 	va_end(arg);
 
 	fprintf(stderr, "\n");
-	done = 1;
+	done = -1;
 	refresh();
 }
 
@@ -168,5 +168,5 @@ join:
 
 end:
 
-	return 0;
+	return done < 0 ? 1 : 0;
 }
