@@ -16,7 +16,7 @@ battery(const char *bat)
 	snprintf(path, sizeof(path), "/sys/class/power_supply/%s/charge_now", bat);
 	file = fopen(path, "r");
 	if (file == NULL) {
-		die("file does not exist (%s). check the argument (%s).", path, bat);
+		die("File does not exist (%s). Check the argument (%s).", path, bat);
 		return NULL;
 	}
 	fscanf(file, "%d", &now);
@@ -25,7 +25,7 @@ battery(const char *bat)
 	snprintf(path, sizeof(path), "/sys/class/power_supply/%s/charge_full", bat);
 	file = fopen(path, "r");
 	if (file == NULL) {
-		die("file does not exist (%s). check the argument (%s).", path, bat);
+		die("File does not exist (%s). Check the argument (%s).", path, bat);
 		return NULL;
 	}
 	fscanf(file, "%d", &full);
@@ -34,7 +34,7 @@ battery(const char *bat)
 	snprintf(path, sizeof(path), "/sys/class/power_supply/%s/current_now", bat);
 	file = fopen(path, "r");
 	if (file == NULL) {
-		die("file does not exist (%s). check the argument (%s).", path, bat);
+		die("File does not exist (%s). Check the argument (%s).", path, bat);
 		return NULL;
 	}
 	fscanf(file, "%d", &current);
@@ -44,7 +44,7 @@ battery(const char *bat)
 	snprintf(path, sizeof(path), "/sys/class/power_supply/%s/status", bat);
 	file = fopen(path, "r");
 	if (file == NULL) {
-		die("file does not exist (%s). check the argument (%s).", path, bat);
+		die("File does not exist (%s). Check the argument (%s).", path, bat);
 		return NULL;
 	}
 	fscanf(file, "%12s", &chr[0]);

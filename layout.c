@@ -33,7 +33,7 @@ layout_start(void *unused)
 
 	d = XOpenDisplay(NULL);
 	if (d == NULL) {
-		die("layout thread failed to open display.");
+		die("Layout thread failed to open display.");
 		return NULL;
 	}
 	if (!XkbQueryExtension(d, 0, 0, 0, 0, 0)) {
@@ -42,7 +42,7 @@ layout_start(void *unused)
 	}
 	if (!XkbSelectEventDetails(d, XkbUseCoreKbd, XkbStateNotify, \
 	        XkbGroupStateMask, XkbGroupStateMask)) {
-		die("layout thread failed to select X event details.");
+		die("Layout thread failed to select X event details.");
 		goto close;
 	}
 	XSync(d, False);

@@ -46,7 +46,7 @@ save_info(pa_context *c, const pa_sink_info *i, int eol, void *unused)
 	if (eol>0 || !i)
 		return;
 	if (eol<0) {
-		die("pulseaudio sink event callback got eol=%d.", eol);
+		die("PulseAudio sink event callback got eol=%d.", eol);
 		return;
 	}
 
@@ -108,7 +108,7 @@ context_state_callback(pa_context *c, void *unused)
 				pa_operation_unref(o);
 			} break;
 		case PA_CONTEXT_FAILED:
-			die("pulseaudio context failed.");
+			die("PulseAudio context failed.");
 			break;
 		default:
 			break;
@@ -124,11 +124,11 @@ volume_start(void *unused)
 	context = pa_context_new(api, NULL);
 	pa_context_set_state_callback(context, context_state_callback, NULL /* user */);
 	if (pa_context_connect(context, NULL, PA_CONTEXT_NOAUTOSPAWN | PA_CONTEXT_NOFAIL, NULL) < 0)
-		die("pulseaudio context connection unsuccessful.");
+		die("PulseAudio context connection unsuccessful.");
 
 	while (!done) {
 		if (pa_mainloop_iterate(loop, 1, NULL) < 0)
-			die("pulseaudio main loop iteration error.");
+			die("PulseAudio main loop iteration error.");
 	}
 
 	pa_context_disconnect(context);

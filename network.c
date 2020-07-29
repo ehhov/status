@@ -27,7 +27,7 @@ netspeed(const char *wlan)
 	snprintf(path, sizeof(path), "/sys/class/net/%s/statistics/rx_bytes", wlan);
 	file=fopen(path, "r");
 	if (file == NULL) {
-		die("file does not exist (%s). check the argument (%s).", path, wlan);
+		die("File does not exist (%s). Check the argument (%s).", path, wlan);
 		return NULL;
 	}
 	fscanf(file, "%ld", &in2);
@@ -36,7 +36,7 @@ netspeed(const char *wlan)
 	snprintf(path, sizeof(path), "/sys/class/net/%s/statistics/tx_bytes", wlan);
 	file=fopen(path, "r");
 	if (file == NULL) {
-		die("file does not exist (%s). check the argument (%s).", path, wlan);
+		die("File does not exist (%s). Check the argument (%s).", path, wlan);
 		return NULL;
 	}
 	fscanf(file, "%ld", &out2);
@@ -59,13 +59,13 @@ essid(const char *wlan)
 	snprintf(wrq.ifr_name, sizeof(wrq.ifr_name), "%s", wlan);
 	skfd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (skfd < 0) {
-		die("failed to open socket to get essid. check the argument (%s).", wlan);
+		die("Failed to open socket to get essid. Check the argument (%s).", wlan);
 		return NULL;
 	}
 	memset(name, 0, sizeof(name));
 	wrq.u.essid.pointer = name;
 	if (ioctl(skfd, SIOCGIWESSID, &wrq) < 0)
-		die("failed to do something using ioctl(). check the argument (%s)", wlan);
+		die("Failed to do something using ioctl(). Check the argument (%s)", wlan);
 	close(skfd);
 	return name;
 }

@@ -79,14 +79,14 @@ main()
 	memset(&action, 0, sizeof(struct sigaction));
 	action.sa_handler = sigusr;
 	if (sigaction(SIGUSR1, &action, NULL)) {
-		die("failed to set signal handler for SIGUSR1.");
+		die("Failed to set signal handler for SIGUSR1.");
 		goto end;
 	}
 	memset(&action, 0, sizeof(struct sigaction));
 	action.sa_handler = finish;
 	if (sigaction(SIGINT, &action, NULL) \
 	   || sigaction(SIGTERM, &action, NULL)) {
-		die("failed to set signal handler for SIGINT and SIGTERM.");
+		die("Failed to set signal handler for SIGINT and SIGTERM.");
 		goto end;
 	}
 
@@ -94,35 +94,35 @@ main()
 	   || sigaddset(&sigset, SIGINT) \
 	   || sigaddset(&sigset, SIGTERM) \
 	   || pthread_sigmask(SIG_SETMASK, &sigset, NULL)) {
-		die("failed to set signal mask for secondary threads.");
+		die("Failed to set signal mask for secondary threads.");
 		goto end;
 	}
 
 	status_thread = pthread_self();
 	if (pthread_attr_init(&attr) \
 	   || pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE)) {
-		die("failed to configure thread attributes (joinable).");
+		die("Failed to configure thread attributes (joinable).");
 		goto end;
 	}
 	if (pthread_create(&kb_thread, NULL, layout_start, NULL) \
 	   || pthread_create(&vol_thread, NULL, volume_start, NULL)) {
-		die("failed to create layout and volume threads.");
+		die("Failed to create layout and volume threads.");
 		goto end;
 	}
 	if (pthread_attr_destroy(&attr)) {
-		die("failed to free thread attributes.");
+		die("Failed to free thread attributes.");
 		goto join;
 	}
 	
 	if (sigemptyset(&sigset) \
 	   || pthread_sigmask(SIG_SETMASK, &sigset, NULL)) {
-		die("failed to set signal mask for the main thread.");
+		die("Failed to set signal mask for the main thread.");
 		goto join;
 	}
 
 	display = XOpenDisplay(NULL);
 	if (display == NULL) {
-		die("failed to open display.");
+		die("Failed to open display.");
 		goto join;
 	}
 
