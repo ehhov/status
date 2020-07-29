@@ -1,7 +1,7 @@
 #include <X11/Xlib.h>
 #include <X11/XKBlib.h>
 #include <stdlib.h>
-#include <sys/select.h>
+#include <poll.h>
 
 extern int done;
 extern void refresh(void);
@@ -29,8 +29,7 @@ layout_start(void *unused)
 {
 	Display *d;
 	XEvent e;
-	int fd;
-	fd_set fds;
+	struct pollfd fds[1];
 
 	d = XOpenDisplay(NULL);
 	if (d == NULL) {
@@ -48,13 +47,12 @@ layout_start(void *unused)
 	}
 	XSync(d, False);
 
-	fd = ConnectionNumber(d);
+	fds[0].fd = ConnectionNumber(d);
+	fds[0].events = POLLIN;
 	
 	while (!done)
 	{
-		FD_ZERO(&fds);
-		FD_SET(fd, &fds);
-		select(fd + 1, &fds, NULL, NULL, NULL);
+		poll(fds, 1, -1);
 		while (XPending(d)) {
 			XNextEvent(d, &e);
 			XkbEvent *ke = (XkbEvent *) &e;
