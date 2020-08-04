@@ -13,7 +13,7 @@ extern const char *retprintf(const char *fmt, ...);
 static const char *volume_icons[4]={"🔇","🔈","🔉","🔊"};
 
 static int percent, mute, icon = 0;
-static char descriptionstr[LEN+3] = "";
+static char descriptionstr[LEN + 3] = "\0(";
 static pa_mainloop *loop;
 static pa_mainloop_api *api;
 static pa_context *context;
@@ -50,15 +50,22 @@ save_info(pa_context *c, const pa_sink_info *i, int eol, void *unused)
 		return;
 	}
 
+	static int dlen, isfirst = 1;
 	int volume = pa_cvolume_avg(&i->volume) * 100.0 / PA_VOLUME_NORM + 0.5;
-	static char description[LEN];
+	char *description = descriptionstr + 2;
+	description[dlen] = '\0';
 	int cmp = strcmp(i->description, description);
+	description[dlen] = ')';
 	
 	if (volume != percent || i->mute != mute || cmp) {
 		if (cmp) {
 			strncpy(description, i->description, LEN);
-			description[LEN-1] = '\0';
-			snprintf(descriptionstr, LEN+3, " (%s)", description);
+			dlen = strlen(i->description);
+			if (dlen > LEN)
+				dlen = LEN;
+			descriptionstr[0] = isfirst ? (isfirst = 0, '\0') : ' ';
+			descriptionstr[dlen + 2] = ')';
+			descriptionstr[dlen + 3] = '\0';
 		} else {
 			descriptionstr[0] = '\0';
 		}
