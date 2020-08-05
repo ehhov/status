@@ -68,7 +68,8 @@ main()
 	const int max = 1024;
 	size_t pos;
 	char status[max];
-	Display *display;
+	Display *dpy;
+	Window root;
 
 	pthread_t kb_thread, vol_thread;
 	pthread_attr_t attr;
@@ -120,17 +121,16 @@ main()
 		goto join;
 	}
 
-	display = XOpenDisplay(NULL);
-	if (display == NULL) {
+	if (!(dpy = XOpenDisplay(NULL))) {
 		die("Failed to open display.");
 		goto join;
 	}
+	root = DefaultRootWindow(dpy);
 
 	netspeed(wlan); /* needed to save initial values */
 
 	/* Infinite loop begins */
-	while (!done)
-	{
+	while (!done) {
 		pos = 0;
 		pos += snprintf(status+pos, max-pos, beginning);
 		pos += snprintf(status+pos, max-pos, "%s:%s", essid(wlan), netspeed(wlan));
@@ -146,8 +146,8 @@ main()
 		pos += snprintf(status+pos, max-pos, "%s", datetime());
 		pos += snprintf(status+pos, max-pos, ending);		
 		
-		XStoreName(display, DefaultRootWindow(display), status);
-		XFlush(display);
+		XStoreName(dpy, root, status);
+		XFlush(dpy);
 
 		if (!changed) {
 			clock_gettime(CLOCK_REALTIME, &wait);
@@ -159,8 +159,8 @@ main()
 	}
 	/* Infinite loop ends */
 	
-	XStoreName(display, DefaultRootWindow(display), NULL);
-	XCloseDisplay(display);
+	XStoreName(dpy, root, NULL);
+	XCloseDisplay(dpy);
 
 join:
 	pthread_kill(kb_thread, SIGUSR1);

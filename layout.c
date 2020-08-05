@@ -29,10 +29,10 @@ layout_start(void *unused)
 {
 	Display *d;
 	XEvent e;
+	XkbEvent *ke = (XkbEvent *) &e;
 	struct pollfd fds[1];
 
-	d = XOpenDisplay(NULL);
-	if (d == NULL) {
+	if (!(d = XOpenDisplay(NULL))) {
 		die("Layout thread failed to open display.");
 		return NULL;
 	}
@@ -41,7 +41,7 @@ layout_start(void *unused)
 		goto close;
 	}
 	if (!XkbSelectEventDetails(d, XkbUseCoreKbd, XkbStateNotify, \
-	        XkbGroupStateMask, XkbGroupStateMask)) {
+	                           XkbGroupStateMask, XkbGroupStateMask)) {
 		die("Layout thread failed to select X event details.");
 		goto close;
 	}
@@ -50,12 +50,10 @@ layout_start(void *unused)
 	fds[0].fd = ConnectionNumber(d);
 	fds[0].events = POLLIN;
 	
-	while (!done)
-	{
+	while (!done) {
 		poll(fds, 1, -1);
 		while (XPending(d)) {
 			XNextEvent(d, &e);
-			XkbEvent *ke = (XkbEvent *) &e;
 			if (ke->state.group != layout) {
 				layout = ke->state.group;
 				refresh();

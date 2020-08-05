@@ -123,9 +123,8 @@ main()
 	battery(bat); /* tint2s needs to know percent in advance */
 
 	/* Infinite loop begins */
-	while (!done)
-	{
-		printf(SP);	color("666666");
+	while (!done) {
+		printf(SP); color("666666");
 		printf("> %s: %s "PS, essid(wlan), netspeed(wlan));
 		
 		printf("%s", volume_icon());
