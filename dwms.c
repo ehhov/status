@@ -61,6 +61,18 @@ static void
 sigusr(int signal)
 { /* do nothing, but still interrupt sleep */ }
 
+static size_t
+strcpypos(char *dest, size_t n, const char *src)
+{
+	dest[n - 1] = '\0';
+	strncpy(dest, src, n);
+	if (dest[n - 1]) {
+		dest[n - 1] = '\0';
+		return n;
+	}
+	return strlen(src);
+}
+
 
 int
 main()
@@ -132,19 +144,19 @@ main()
 	/* Infinite loop begins */
 	while (!done) {
 		pos = 0;
-		pos += snprintf(status+pos, max-pos, beginning);
+		pos += strcpypos(status+pos, max-pos, beginning);
 		pos += snprintf(status+pos, max-pos, "%s:%s", essid(wlan), netspeed(wlan));
-		pos += snprintf(status+pos, max-pos, separator);		
-		pos += snprintf(status+pos, max-pos, "%s", volume_text());
+		pos += strcpypos(status+pos, max-pos, separator);
+		pos += strcpypos(status+pos, max-pos, volume_text());
 		if (show_description)
-			pos += snprintf(status+pos, max-pos, "%s", volume_description());
-		pos += snprintf(status+pos, max-pos, separator);		
-		pos += snprintf(status+pos, max-pos, "%s", layout_text());
-		pos += snprintf(status+pos, max-pos, separator);		
-		pos += snprintf(status+pos, max-pos, "%s", battery(bat));
-		pos += snprintf(status+pos, max-pos, separator);		
-		pos += snprintf(status+pos, max-pos, "%s", datetime());
-		pos += snprintf(status+pos, max-pos, ending);		
+			pos += strcpypos(status+pos, max-pos, volume_description());
+		pos += strcpypos(status+pos, max-pos, separator);
+		pos += strcpypos(status+pos, max-pos, layout_text());
+		pos += strcpypos(status+pos, max-pos, separator);
+		pos += strcpypos(status+pos, max-pos, battery(bat));
+		pos += strcpypos(status+pos, max-pos, separator);
+		pos += strcpypos(status+pos, max-pos, datetime());
+		pos += strcpypos(status+pos, max-pos, ending);
 		
 		XStoreName(dpy, root, status);
 		XFlush(dpy);

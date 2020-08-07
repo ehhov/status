@@ -127,11 +127,11 @@ main()
 		printf(SP); color("666666");
 		printf("> %s: %s "PS, essid(wlan), netspeed(wlan));
 		
-		printf("%s", volume_icon());
+		fputs(volume_icon(), stdout);
 		if (show_description)
 			printf("%s ", volume_description());
 		
-		printf("%s", layout_icon());
+		fputs(layout_icon(), stdout);
 		
 		printf(SP);
 		if (battery_percent() > 75)
@@ -146,7 +146,7 @@ main()
 		
 		printf(" %s ", datetime());
 
-		printf("\n");
+		putc('\n', stdout);
 		fflush(stdout);
 
 		if (!changed) {

@@ -49,9 +49,12 @@ essid(const char *wlan)
 	static char name[IW_ESSID_MAX_SIZE+1];
 	int skfd;
 	struct iwreq wrq;
+
 	memset(&wrq, 0, sizeof(struct iwreq));
 	wrq.u.essid.length = IW_ESSID_MAX_SIZE + 1;
-	snprintf(wrq.ifr_name, sizeof(wrq.ifr_name), "%s", wlan);
+	strncpy(wrq.ifr_name, wlan, sizeof(wrq.ifr_name));
+	wrq.ifr_name[sizeof(wrq.ifr_name) - 1] = '\0';
+
 	skfd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (skfd < 0) {
 		die("Failed to open socket to get essid. Check the argument (%s).", wlan);
