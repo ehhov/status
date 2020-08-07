@@ -10,7 +10,7 @@ extern const char *retprintf(const char *fmt, ...);
 
 static const char *Xkb_text[]={"us","ru"};
 static const char *Xkb_icon[]={"🇺🇸","🇷🇺"};
-static int layout = 0; /* we don't know it before the first event... */
+static int layout = 0;
 
 const char *
 layout_text(void)
@@ -22,6 +22,16 @@ const char *
 layout_icon(void)
 {
 	return Xkb_icon[layout];
+}
+
+static int
+getlayout(Display *dpy)
+{
+	XkbStateRec state;
+
+	if (XkbGetState(dpy, XkbUseCoreKbd, &state))
+		return 0;
+	return state.group;
 }
 
 void *
@@ -46,6 +56,9 @@ layout_start(void *unused)
 		goto close;
 	}
 	XSync(d, False);
+
+	layout = getlayout(d);
+	refresh();
 
 	fds[0].fd = ConnectionNumber(d);
 	fds[0].events = POLLIN;
