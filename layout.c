@@ -52,7 +52,7 @@ layout_start(void *unused)
 	}
 	if (!XkbSelectEventDetails(d, XkbUseCoreKbd, XkbStateNotify, \
 	                           XkbGroupStateMask, XkbGroupStateMask)) {
-		die("Layout thread failed to select X event details.");
+		die("Layout thread failed to select Xkb event details.");
 		goto close;
 	}
 	XSync(d, False);
