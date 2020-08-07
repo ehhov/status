@@ -6,49 +6,31 @@ extern const char *retprintf(const char *fmt, ...);
 
 static int percent; /* only for tint2 */
 
+static void
+readvar(const char *bat, const char *name, const char *fmt, void *var)
+{
+	FILE *file;
+	char path[50];
+
+	snprintf(path, sizeof(path), "/sys/class/power_supply/%s/%s", bat, name);
+	if (!(file = fopen(path, "r"))) {
+		die("File does not exist: %s. Check the argument: %s.", path, bat);
+		return;
+	}
+	fscanf(file, fmt, var);
+	fclose(file);
+}
+
 const char *
 battery(const char *bat)
 {
 	int now, full, current;
-	char path[50], chr[12];
-	FILE *file;
+	char chr[12];
 
-	snprintf(path, sizeof(path), "/sys/class/power_supply/%s/charge_now", bat);
-	file = fopen(path, "r");
-	if (file == NULL) {
-		die("File does not exist (%s). Check the argument (%s).", path, bat);
-		return NULL;
-	}
-	fscanf(file, "%d", &now);
-	fclose(file);
-
-	snprintf(path, sizeof(path), "/sys/class/power_supply/%s/charge_full", bat);
-	file = fopen(path, "r");
-	if (file == NULL) {
-		die("File does not exist (%s). Check the argument (%s).", path, bat);
-		return NULL;
-	}
-	fscanf(file, "%d", &full);
-	fclose(file);
-
-	snprintf(path, sizeof(path), "/sys/class/power_supply/%s/current_now", bat);
-	file = fopen(path, "r");
-	if (file == NULL) {
-		die("File does not exist (%s). Check the argument (%s).", path, bat);
-		return NULL;
-	}
-	fscanf(file, "%d", &current);
-	fclose(file);
-	if (current == 0) current = 1;
-
-	snprintf(path, sizeof(path), "/sys/class/power_supply/%s/status", bat);
-	file = fopen(path, "r");
-	if (file == NULL) {
-		die("File does not exist (%s). Check the argument (%s).", path, bat);
-		return NULL;
-	}
-	fscanf(file, "%12s", &chr[0]);
-	fclose(file);
+	readvar(bat, "charge_now", "%d", &now);
+	readvar(bat, "charge_full", "%d", &full);
+	readvar(bat, "current_now", "%d", &current);
+	readvar(bat, "status", "%12s", chr);
 
 	if (!strcmp(chr, "Full")) {
 		strcpy(chr, " Charged");
