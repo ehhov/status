@@ -77,47 +77,30 @@ main()
 
 	memset(&action, 0, sizeof(struct sigaction));
 	action.sa_handler = sigusr;
-	if (sigaction(SIGUSR1, &action, NULL)) {
-		die("Failed to set signal handler for SIGUSR1.");
-		goto end;
-	}
+	sigaction(SIGUSR1, &action, NULL);
 	memset(&action, 0, sizeof(struct sigaction));
 	action.sa_handler = finish;
-	if (sigaction(SIGINT, &action, NULL) \
-	   || sigaction(SIGTERM, &action, NULL)) {
-		die("Failed to set signal handler for SIGINT and SIGTERM.");
-		goto end;
-	}
+	sigaction(SIGINT, &action, NULL);
+	sigaction(SIGTERM, &action, NULL);
 
-	if (sigemptyset(&sigset) \
-	   || sigaddset(&sigset, SIGINT) \
-	   || sigaddset(&sigset, SIGTERM) \
-	   || pthread_sigmask(SIG_SETMASK, &sigset, NULL)) {
-		die("Failed to set signal mask for secondary threads.");
-		goto end;
-	}
+	sigemptyset(&sigset);
+	sigaddset(&sigset, SIGINT);
+	sigaddset(&sigset, SIGTERM);
+	pthread_sigmask(SIG_SETMASK, &sigset, NULL);
 
 	status_thread = pthread_self();
-	if (pthread_attr_init(&attr) \
-	   || pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE)) {
-		die("Failed to configure thread attributes (joinable).");
-		goto end;
-	}
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 	if (pthread_create(&kb_thread, NULL, layout_start, NULL) \
 	   || pthread_create(&vol_thread, NULL, volume_start, NULL)) {
+		pthread_attr_destroy(&attr);
 		die("Failed to create layout and volume threads.");
 		goto end;
 	}
-	if (pthread_attr_destroy(&attr)) {
-		die("Failed to free thread attributes.");
-		goto join;
-	}
+	pthread_attr_destroy(&attr);
 	
-	if (sigemptyset(&sigset) \
-	   || pthread_sigmask(SIG_SETMASK, &sigset, NULL)) {
-		die("Failed to set signal mask for the main thread.");
-		goto join;
-	}
+	sigemptyset(&sigset);
+	pthread_sigmask(SIG_SETMASK, &sigset, NULL);
 
 	netspeed(wlan); /* needed to save initial values */
 	battery(bat); /* tint2s needs to know percent in advance */
@@ -159,7 +142,6 @@ main()
 	}
 	/* Infinite loop ends */
 	
-join:
 	pthread_kill(kb_thread, SIGUSR1);
 	pthread_kill(vol_thread, SIGUSR1);
 	pthread_join(kb_thread, NULL);
