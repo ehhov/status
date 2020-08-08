@@ -4,7 +4,7 @@
 #include <poll.h>
 
 extern int done;
-extern void refresh(void);
+extern void refresh(int a);
 extern void die(const char *fmt, ...);
 extern const char *retprintf(const char *fmt, ...);
 
@@ -57,8 +57,9 @@ layout_start(void *unused)
 	}
 	XSync(d, False);
 
+	refresh(1);
 	layout = getlayout(d);
-	refresh();
+	refresh(0);
 
 	fds[0].fd = ConnectionNumber(d);
 	fds[0].events = POLLIN;
@@ -68,8 +69,9 @@ layout_start(void *unused)
 		while (XPending(d)) {
 			XNextEvent(d, &e);
 			if (ke->state.group != layout) {
+				refresh(1);
 				layout = ke->state.group;
-				refresh();
+				refresh(0);
 			}
 		}
 	}

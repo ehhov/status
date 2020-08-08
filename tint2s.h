@@ -18,4 +18,4 @@ void *volume_start(void *unused);
 #define SP "<span"
 #define PS "</span>"
 
-static void color (const char[7]);
+static void color(const char[7]);

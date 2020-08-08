@@ -6,7 +6,7 @@
 #define LEN 128
 
 extern int done;
-extern void refresh(void);
+extern void refresh(int a);
 extern void die(const char *fmt, ...);
 extern const char *retprintf(const char *fmt, ...);
 
@@ -53,11 +53,10 @@ save_info(pa_context *c, const pa_sink_info *i, int eol, void *unused)
 	static int dlen, isfirst = 1;
 	int volume = pa_cvolume_avg(&i->volume) * 100.0 / PA_VOLUME_NORM + 0.5;
 	char *description = descriptionstr + 2;
-	description[dlen] = '\0';
-	int cmp = strcmp(i->description, description);
-	description[dlen] = ')';
+	int cmp = (dlen > 0) ? strncmp(i->description, description, dlen) : 1;
 	
 	if (volume != percent || i->mute != mute || cmp) {
+		refresh(1);
 		if (cmp) {
 			strncpy(description, i->description, LEN);
 			dlen = strlen(i->description);
@@ -75,7 +74,7 @@ save_info(pa_context *c, const pa_sink_info *i, int eol, void *unused)
 		else if (volume < 30) icon=1;
 		else if (volume < 90) icon=2;
 		else icon=3;
-		refresh();
+		refresh(0);
 	}
 }
 

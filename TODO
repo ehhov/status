@@ -1,5 +1,4 @@
-Find and use a more adequate way to refresh main, layout, and volume 
-threads.
+Find a more adequate way to interrupt layout and volume threads.
 
 Possibly locate BAT0 and wlp58s0 by the program itself.
 

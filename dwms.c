@@ -3,24 +3,26 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
 #include <pthread.h>
 #include <signal.h>
-
 #include <X11/Xlib.h>
 
 #include "dwms.h"
 #include "tuning.h"
 
 int done = 0;
-static int changed = 0;
-static pthread_t status_thread;
+static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t cond;
 
 void
-refresh()
+refresh(int a)
 {
-	changed = 1; /* in case something happens outside of the nanosleep() waiting time */
-	pthread_kill(status_thread, SIGUSR1);
+	if (a) {
+		pthread_mutex_lock(&mutex);
+	} else {
+		pthread_cond_signal(&cond);
+		pthread_mutex_unlock(&mutex);
+	}
 }
 
 void
@@ -32,9 +34,10 @@ die(const char *fmt, ...)
 	vfprintf(stderr, fmt, arg);
 	va_end(arg);
 
-	fprintf(stderr, "\n");
+	putc('\n', stderr);
 	done = -1;
-	refresh();
+	refresh(1);
+	refresh(0);
 }
 
 const char *
@@ -51,15 +54,21 @@ retprintf(const char *fmt, ...)
 	return (r < 0)? NULL : str;
 }
 
-static void
-finish(int signal)
+static void *
+waitsignals(void *sigset)
 {
+	int signal;
+
+	sigwait(sigset, &signal);
 	done = 1;
+	refresh(1);
+	refresh(0);
+	return NULL;
 }
 
 static void
-sigusr(int signal)
-{ /* do nothing, but still interrupt sleep */ }
+donothing(int signal)
+{ }
 
 static size_t
 strcpypos(char *dest, size_t n, const char *src)
@@ -83,41 +92,43 @@ main()
 	Display *dpy;
 	Window root;
 
-	pthread_t kb_thread, vol_thread;
+	pthread_t kb_thread, vol_thread, sig_thread;
 	pthread_attr_t attr;
+	pthread_condattr_t cattr;
 	struct timespec wait;
 	sigset_t sigset;
 	struct sigaction action;
-
-	memset(&action, 0, sizeof(struct sigaction));
-	action.sa_handler = sigusr;
-	sigaction(SIGUSR1, &action, NULL);
-	memset(&action, 0, sizeof(struct sigaction));
-	action.sa_handler = finish;
-	sigaction(SIGINT, &action, NULL);
-	sigaction(SIGTERM, &action, NULL);
 
 	sigemptyset(&sigset);
 	sigaddset(&sigset, SIGINT);
 	sigaddset(&sigset, SIGTERM);
 	pthread_sigmask(SIG_SETMASK, &sigset, NULL);
 
-	status_thread = pthread_self();
+	memset(&action, 0, sizeof(struct sigaction));
+	action.sa_handler = donothing;
+	sigaction(SIGUSR1, &action, NULL);
+
+	pthread_condattr_init(&cattr);
+	pthread_condattr_setclock(&cattr, CLOCK_REALTIME);
+	pthread_cond_init(&cond, &cattr);
+	pthread_condattr_destroy(&cattr);
+
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-	if (pthread_create(&kb_thread, NULL, layout_start, NULL) \
-	   || pthread_create(&vol_thread, NULL, volume_start, NULL)) {
+	if (pthread_create(&kb_thread, &attr, layout_start, NULL) \
+	   || pthread_create(&vol_thread, &attr, volume_start, NULL) \
+	   || pthread_create(&sig_thread, &attr, waitsignals, &sigset)) {
 		pthread_attr_destroy(&attr);
-		die("Failed to create layout and volume threads.");
+		fputs("Failed to create additional threads.\n", stderr);
+		done = -1;
 		goto end;
 	}
 	pthread_attr_destroy(&attr);
-	
-	sigemptyset(&sigset);
-	pthread_sigmask(SIG_SETMASK, &sigset, NULL);
 
 	if (!(dpy = XOpenDisplay(NULL))) {
-		die("Failed to open display.");
+		fputs("Failed to open display.\n", stderr);
+		pthread_kill(sig_thread, SIGTERM);
+		done = -1;
 		goto join;
 	}
 	root = DefaultRootWindow(dpy);
@@ -125,6 +136,7 @@ main()
 	netspeed(wlan); /* needed to save initial values */
 
 	/* Infinite loop begins */
+	pthread_mutex_lock(&mutex);
 	while (!done) {
 		pos = 0;
 		pos += strcpypos(status+pos, max-pos, beginning);
@@ -140,20 +152,18 @@ main()
 		pos += strcpypos(status+pos, max-pos, separator);
 		pos += strcpypos(status+pos, max-pos, datetime());
 		pos += strcpypos(status+pos, max-pos, ending);
-		
+
 		XStoreName(dpy, root, status);
 		XFlush(dpy);
 
-		if (!changed) {
-			clock_gettime(CLOCK_REALTIME, &wait);
-			wait.tv_sec = interval - 1 - (wait.tv_sec % interval);
-			wait.tv_nsec = 1e9 - wait.tv_nsec;
-			nanosleep(&wait, NULL);
-		}
-		changed = 0;
+		clock_gettime(CLOCK_REALTIME, &wait);
+		wait.tv_sec += interval - wait.tv_sec % interval;
+		wait.tv_nsec = 0;
+		pthread_cond_timedwait(&cond, &mutex, &wait);
 	}
+	pthread_mutex_unlock(&mutex);
 	/* Infinite loop ends */
-	
+
 	XStoreName(dpy, root, NULL);
 	XCloseDisplay(dpy);
 
@@ -162,8 +172,11 @@ join:
 	pthread_kill(vol_thread, SIGUSR1);
 	pthread_join(kb_thread, NULL);
 	pthread_join(vol_thread, NULL);
+	pthread_join(sig_thread, NULL);
 
 end:
+	pthread_mutex_destroy(&mutex);
+	pthread_cond_destroy(&cond);
 
 	return done < 0 ? 1 : 0;
 }
