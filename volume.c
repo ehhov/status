@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <pulse/pulseaudio.h>
@@ -10,7 +9,15 @@ extern void refresh(int a);
 extern void die(const char *fmt, ...);
 extern const char *retprintf(const char *fmt, ...);
 
-static const char *volume_icons[4]={"🔇","🔈","🔉","🔊"};
+const char *volume_text(void);
+const char *volume_icon(void);
+const char *volume_description(void);
+void *volume_start(void *unused);
+static void save_info(pa_context *c, const pa_sink_info *i, int eol, void *unused);
+static void context_subscribe_callback(pa_context *c, pa_subscription_event_type_t t, uint32_t idx, void *unused);
+static void context_state_callback(pa_context *c, void *unused);
+
+static const char *volume_icons[4] = {"🔇", "🔈", "🔉", "🔊"};
 
 static int percent, mute, icon = 0;
 static char descriptionstr[LEN + 3] = "\0(";
@@ -18,14 +25,10 @@ static pa_mainloop *loop;
 static pa_mainloop_api *api;
 static pa_context *context;
 
-static void context_state_callback(pa_context *c, void *unused);
-static void context_subscribe_callback(pa_context *c, pa_subscription_event_type_t t, uint32_t idx, void *unused);
-static void save_info(pa_context *c, const pa_sink_info *i, int eol, void *unused);
-
 const char *
 volume_text(void)
 {
-	return retprintf("%s:%2d%s", mute?"M":"V", percent, percent<100?"%":"");
+	return retprintf("%s:%2d%s", mute ? "M" : "V", percent, percent < 100 ? "%" : "");
 }
 
 const char *
@@ -40,12 +43,12 @@ volume_description(void)
 	return descriptionstr;
 }
 
-void
+static void
 save_info(pa_context *c, const pa_sink_info *i, int eol, void *unused)
 {
-	if (eol>0 || !i)
+	if (eol > 0 || !i)
 		return;
-	if (eol<0) {
+	if (eol < 0) {
 		die("PulseAudio sink event callback got eol=%d.", eol);
 		return;
 	}
@@ -70,54 +73,54 @@ save_info(pa_context *c, const pa_sink_info *i, int eol, void *unused)
 		}
 		percent = volume;
 		mute = i->mute;
-		if (mute) icon=0;
-		else if (volume < 30) icon=1;
-		else if (volume < 90) icon=2;
-		else icon=3;
+		if (mute) icon = 0;
+		else if (volume < 30) icon = 1;
+		else if (volume < 90) icon = 2;
+		else icon = 3;
 		refresh(0);
 	}
 }
 
-void
+static void
 context_subscribe_callback(pa_context *c, pa_subscription_event_type_t t, uint32_t idx, void *unused)
 {
 	if ((t & PA_SUBSCRIPTION_EVENT_TYPE_MASK) != PA_SUBSCRIPTION_EVENT_CHANGE)
 		return;
+
 	pa_subscription_event_type_t actual = t & PA_SUBSCRIPTION_EVENT_FACILITY_MASK;
+	pa_operation *o;
+
 	switch (actual) {
-		case PA_SUBSCRIPTION_EVENT_SINK:
-			{
-				pa_operation *o = pa_context_get_sink_info_by_index(c, idx, save_info, NULL /* user */);
-				pa_operation_unref(o);
-			} break;
-		case PA_SUBSCRIPTION_EVENT_SERVER:
-			{
-				pa_operation *o = pa_context_get_sink_info_by_name(c, "@DEFAULT_SINK@", save_info, NULL /* user */);
-				pa_operation_unref(o);
-			} break;
-		default:
-			break;
+	case PA_SUBSCRIPTION_EVENT_SINK:
+		o = pa_context_get_sink_info_by_index(c, idx, save_info, NULL /* user */);
+		pa_operation_unref(o);
+		break;
+	case PA_SUBSCRIPTION_EVENT_SERVER:
+		o = pa_context_get_sink_info_by_name(c, "@DEFAULT_SINK@", save_info, NULL /* user */);
+		pa_operation_unref(o);
+		break;
+	default:
+		break;
 	}
 }
 
-void
+static void
 context_state_callback(pa_context *c, void *unused)
 {
+	pa_operation *o;
 	switch (pa_context_get_state(c)) {
-		case PA_CONTEXT_READY:
-			{
-				pa_context_set_subscribe_callback(c, context_subscribe_callback, NULL /* user */);
-				pa_operation *o;
-				o = pa_context_get_sink_info_by_name(c, "@DEFAULT_SINK@", save_info, NULL /* user */);
-				pa_operation_unref(o);
-				o = pa_context_subscribe(c, PA_SUBSCRIPTION_MASK_SINK | PA_SUBSCRIPTION_MASK_SERVER, NULL, NULL);
-				pa_operation_unref(o);
-			} break;
-		case PA_CONTEXT_FAILED:
-			die("PulseAudio context failed.");
-			break;
-		default:
-			break;
+	case PA_CONTEXT_READY:
+		pa_context_set_subscribe_callback(c, context_subscribe_callback, NULL /* user */);
+		o = pa_context_get_sink_info_by_name(c, "@DEFAULT_SINK@", save_info, NULL /* user */);
+		pa_operation_unref(o);
+		o = pa_context_subscribe(c, PA_SUBSCRIPTION_MASK_SINK | PA_SUBSCRIPTION_MASK_SERVER, NULL, NULL);
+		pa_operation_unref(o);
+		break;
+	case PA_CONTEXT_FAILED:
+		die("PulseAudio context failed.");
+		break;
+	default:
+		break;
 	}
 }
 
@@ -132,10 +135,9 @@ volume_start(void *unused)
 	if (pa_context_connect(context, NULL, PA_CONTEXT_NOAUTOSPAWN | PA_CONTEXT_NOFAIL, NULL) < 0)
 		die("PulseAudio context connection unsuccessful.");
 
-	while (!done) {
+	while (!done)
 		if (pa_mainloop_iterate(loop, 1, NULL) < 0)
 			die("PulseAudio main loop iteration error.");
-	}
 
 	pa_context_disconnect(context);
 	pa_context_unref(context);

@@ -11,6 +11,10 @@
 extern void die(const char *fmt, ...);
 extern const char *retprintf(const char *fmt, ...);
 
+const char *netspeed(const char *wlan);
+const char *essid(const char *wlan);
+static void readvar(const char *wlan, const char *name, const char *fmt, void *var);
+
 static void
 readvar(const char *wlan, const char *name, const char *fmt, void *var)
 {

@@ -9,6 +9,13 @@
 #include "tint2s.h"
 #include "tuning.h"
 
+void refresh(int a);
+void die(const char *fmt, ...);
+const char *retprintf(const char *fmt, ...);
+static void *waitsignals(void *sigset);
+static void donothing(int signal);
+static void color(const char *thecolor);
+
 int done = 0;
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t cond;
@@ -70,7 +77,7 @@ donothing(int signal)
 { }
 
 static void
-color(const char thecolor[7])
+color(const char *thecolor)
 {
 	printf(" foreground=\"#%s\"", thecolor);
 }

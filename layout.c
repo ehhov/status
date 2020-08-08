@@ -1,12 +1,16 @@
-#include <X11/Xlib.h>
-#include <X11/XKBlib.h>
 #include <stdlib.h>
 #include <poll.h>
+#include <X11/Xlib.h>
+#include <X11/XKBlib.h>
 
 extern int done;
 extern void refresh(int a);
 extern void die(const char *fmt, ...);
-extern const char *retprintf(const char *fmt, ...);
+
+const char *layout_text(void);
+const char *layout_icon(void);
+void *layout_start(void *unused);
+static int getlayout(Display *dpy);
 
 static const char *Xkb_text[]={"us","ru"};
 static const char *Xkb_icon[]={"🇺🇸","🇷🇺"};

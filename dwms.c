@@ -10,6 +10,13 @@
 #include "dwms.h"
 #include "tuning.h"
 
+void refresh(int a);
+void die(const char *fmt, ...);
+const char *retprintf(const char *fmt, ...);
+static void *waitsignals(void *sigset);
+static void donothing(int signal);
+static int strcpypos(char *dest, int n, const char *src);
+
 int done = 0;
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t cond;
@@ -70,16 +77,18 @@ static void
 donothing(int signal)
 { }
 
-static size_t
-strcpypos(char *dest, size_t n, const char *src)
+static int
+strcpypos(char *dest, int n, const char *src)
 {
-	dest[n - 1] = '\0';
-	strncpy(dest, src, n);
-	if (dest[n - 1]) {
-		dest[n - 1] = '\0';
-		return n;
-	}
-	return strlen(src);
+	int i;
+
+	if (!dest || !src)
+		return 0;
+	for (i = 0; i < n && src[i]; i++)
+		dest[i] = src[i];
+	if (i == n - 1)
+		dest[i] = '\0';
+	return i;
 }
 
 

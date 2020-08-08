@@ -4,6 +4,10 @@
 extern void die(const char *fmt, ...);
 extern const char *retprintf(const char *fmt, ...);
 
+const char *battery(const char *bat);
+int battery_percent(void); /* only for tint2 */
+static void readvar(const char *bat, const char *name, const char *fmt, void *var);
+
 static int percent; /* only for tint2 */
 
 static void
@@ -32,15 +36,14 @@ battery(const char *bat)
 	readvar(bat, "current_now", "%d", &current);
 	readvar(bat, "status", "%12s", chr);
 
-	if (!strcmp(chr, "Full")) {
+	if (chr[0] == 'F')
 		strcpy(chr, " Charged");
-	} else if (!strcmp(chr, "Charging")) {
+	else if (chr[0] == 'C')
 		snprintf(chr, 12, "+ %02d:%02d", (full-now) / current, \
-		    (full-now) % current * 60 / current);
-	} else {
+		         (full-now) % current * 60 / current);
+	else
 		snprintf(chr, 12, " %02d:%02d", now / current, \
-		    now % current * 60 / current);
-	}
+		         now % current * 60 / current);
 
 	percent = 100 * now / full; /* only for tint2 */
 
