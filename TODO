@@ -1,5 +1,3 @@
-Find a more adequate way to interrupt layout and volume threads.
-
 Possibly locate BAT0 and wlp58s0 by the program itself.
 
 Consider moving from pulseaudio to alsa.

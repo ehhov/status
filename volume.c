@@ -4,7 +4,6 @@
 
 #define LEN 128
 
-extern int done;
 extern void refresh(int a);
 extern void die(const char *fmt, ...);
 extern const char *retprintf(const char *fmt, ...);
@@ -12,7 +11,8 @@ extern const char *retprintf(const char *fmt, ...);
 const char *volume_text(void);
 const char *volume_icon(void);
 const char *volume_description(void);
-void *volume_start(void *unused);
+void volume_start(void);
+void volume_stop(void);
 static void save_info(pa_context *c, const pa_sink_info *i, int eol, void *unused);
 static void context_subscribe_callback(pa_context *c, pa_subscription_event_type_t t, uint32_t idx, void *unused);
 static void context_state_callback(pa_context *c, void *unused);
@@ -21,7 +21,7 @@ static const char *volume_icons[4] = {"🔇", "🔈", "🔉", "🔊"};
 
 static int percent, mute, icon = 0;
 static char descriptionstr[LEN + 3] = "\0(";
-static pa_mainloop *loop;
+static pa_threaded_mainloop *loop;
 static pa_mainloop_api *api;
 static pa_context *context;
 
@@ -124,24 +124,25 @@ context_state_callback(pa_context *c, void *unused)
 	}
 }
 
-void *
-volume_start(void *unused)
+void
+volume_start(void)
 {
-	loop = pa_mainloop_new();
-	api = pa_mainloop_get_api(loop);
+	loop = pa_threaded_mainloop_new();
+	api = pa_threaded_mainloop_get_api(loop);
 
 	context = pa_context_new(api, NULL);
 	pa_context_set_state_callback(context, context_state_callback, NULL /* user */);
 	if (pa_context_connect(context, NULL, PA_CONTEXT_NOAUTOSPAWN | PA_CONTEXT_NOFAIL, NULL) < 0)
 		die("PulseAudio context connection unsuccessful.");
+	if (pa_threaded_mainloop_start(loop) < 0)
+		die("PulseAudio failed to start main loop.");
+}
 
-	while (!done)
-		if (pa_mainloop_iterate(loop, 1, NULL) < 0)
-			die("PulseAudio main loop iteration error.");
-
+void
+volume_stop(void)
+{
 	pa_context_disconnect(context);
 	pa_context_unref(context);
-	pa_mainloop_free(loop);
-
-	return NULL;
+	pa_threaded_mainloop_stop(loop);
+	pa_threaded_mainloop_free(loop);
 }

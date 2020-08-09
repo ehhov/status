@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <time.h>
 #include <pthread.h>
 #include <signal.h>
@@ -13,7 +14,6 @@ void refresh(int a);
 void die(const char *fmt, ...);
 const char *retprintf(const char *fmt, ...);
 static void *waitsignals(void *sigset);
-static void donothing(int signal);
 static void color(const char *thecolor);
 
 int done = 0;
@@ -73,10 +73,6 @@ waitsignals(void *sigset)
 }
 
 static void
-donothing(int signal)
-{ }
-
-static void
 color(const char *thecolor)
 {
 	printf(" foreground=\"#%s\"", thecolor);
@@ -86,31 +82,28 @@ color(const char *thecolor)
 int
 main()
 {
-	pthread_t kb_thread, vol_thread, sig_thread;
+	pthread_t kb_thread, sig_thread;
 	pthread_attr_t attr;
 	pthread_condattr_t cattr;
 	struct timespec wait;
 	sigset_t sigset;
-	struct sigaction action;
+	int pipefd[2];
 
 	sigemptyset(&sigset);
 	sigaddset(&sigset, SIGINT);
 	sigaddset(&sigset, SIGTERM);
 	pthread_sigmask(SIG_SETMASK, &sigset, NULL);
 
-	memset(&action, 0, sizeof(struct sigaction));
-	action.sa_handler = donothing;
-	sigaction(SIGUSR1, &action, NULL);
-
 	pthread_condattr_init(&cattr);
 	pthread_condattr_setclock(&cattr, CLOCK_REALTIME);
 	pthread_cond_init(&cond, &cattr);
 	pthread_condattr_destroy(&cattr);
 
+	pipe(pipefd);
+
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-	if (pthread_create(&kb_thread, &attr, layout_start, NULL) \
-	   || pthread_create(&vol_thread, &attr, volume_start, NULL) \
+	if (pthread_create(&kb_thread, &attr, layout_start, &pipefd[0]) \
 	   || pthread_create(&sig_thread, &attr, waitsignals, &sigset)) {
 		pthread_attr_destroy(&attr);
 		fputs("Failed to create additional threads.\n", stderr);
@@ -118,6 +111,7 @@ main()
 		goto end;
 	}
 	pthread_attr_destroy(&attr);
+	volume_start(); /* threaded */
 
 	netspeed(wlan); /* needed to save initial values */
 	battery(bat); /* tint2s needs to know percent in advance */
@@ -158,10 +152,10 @@ main()
 	pthread_mutex_unlock(&mutex);
 	/* Infinite loop ends */
 
-	pthread_kill(kb_thread, SIGUSR1);
-	pthread_kill(vol_thread, SIGUSR1);
+	close(pipefd[0]);
+	close(pipefd[1]);
+	volume_stop();
 	pthread_join(kb_thread, NULL);
-	pthread_join(vol_thread, NULL);
 	pthread_join(sig_thread, NULL);
 
 end:

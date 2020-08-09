@@ -9,7 +9,7 @@ extern void die(const char *fmt, ...);
 
 const char *layout_text(void);
 const char *layout_icon(void);
-void *layout_start(void *unused);
+void *layout_start(void *fd);
 static int getlayout(Display *dpy);
 
 static const char *Xkb_text[]={"us","ru"};
@@ -39,12 +39,12 @@ getlayout(Display *dpy)
 }
 
 void *
-layout_start(void *unused)
+layout_start(void *fd)
 {
 	Display *d;
 	XEvent e;
 	XkbEvent *ke = (XkbEvent *) &e;
-	struct pollfd fds[1];
+	struct pollfd fds[2];
 
 	if (!(d = XOpenDisplay(NULL))) {
 		die("Layout thread failed to open display.");
@@ -67,9 +67,11 @@ layout_start(void *unused)
 
 	fds[0].fd = ConnectionNumber(d);
 	fds[0].events = POLLIN;
+	fds[1].fd = *(int *)fd;
+	fds[1].events = POLLIN;
 	
 	while (!done) {
-		poll(fds, 1, -1);
+		poll(fds, 2, -1);
 		while (XPending(d)) {
 			XNextEvent(d, &e);
 			if (ke->state.group != layout) {
