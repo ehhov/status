@@ -9,13 +9,16 @@ OBJ = ${SRC:.c=.o}
 
 all: dwms tint2s
 
+%.o: %.c %.h tuning.h
+	${CC} -c ${FLAGS} -o $@ $<
+
 %.o: %.c
 	${CC} -c ${FLAGS} -o $@ $<
 
-dwms: dwms.o ${OBJ} dwms.h tuning.h
+dwms: dwms.o ${OBJ}
 	${CC} ${LIBS} ${OBJ} $< -o $@
 
-tint2s: tint2s.o ${OBJ} tint2s.h tuning.h
+tint2s: tint2s.o ${OBJ}
 	${CC} ${LIBS} ${OBJ} $< -o $@
 
 install: all
