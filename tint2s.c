@@ -42,8 +42,6 @@ die(const char *fmt, ...)
 
 	putc('\n', stderr);
 	done = -1;
-	refresh(1);
-	refresh(0);
 }
 
 const char *
@@ -66,7 +64,8 @@ waitsignals(void *sigset)
 	int signal;
 
 	sigwait(sigset, &signal);
-	done = 1;
+	if (!done)
+		done = 1;
 	refresh(1);
 	refresh(0);
 	return NULL;
@@ -155,6 +154,7 @@ main()
 	close(pipefd[0]);
 	close(pipefd[1]);
 	volume_stop();
+	pthread_kill(sig_thread, SIGTERM);
 	pthread_join(kb_thread, NULL);
 	pthread_join(sig_thread, NULL);
 

@@ -57,7 +57,7 @@ save_info(pa_context *c, const pa_sink_info *i, int eol, void *unused)
 	int volume = pa_cvolume_avg(&i->volume) * 100.0 / PA_VOLUME_NORM + 0.5;
 	char *description = descriptionstr + 2;
 	int cmp = (dlen > 0) ? strncmp(i->description, description, dlen) : 1;
-	
+
 	if (volume != percent || i->mute != mute || cmp) {
 		refresh(1);
 		if (cmp) {
@@ -132,8 +132,10 @@ volume_start(void)
 
 	context = pa_context_new(api, NULL);
 	pa_context_set_state_callback(context, context_state_callback, NULL /* user */);
-	if (pa_context_connect(context, NULL, PA_CONTEXT_NOAUTOSPAWN | PA_CONTEXT_NOFAIL, NULL) < 0)
+	if (pa_context_connect(context, NULL, PA_CONTEXT_NOAUTOSPAWN | PA_CONTEXT_NOFAIL, NULL) < 0) {
 		die("PulseAudio context connection unsuccessful.");
+		return;
+	}
 	if (pa_threaded_mainloop_start(loop) < 0)
 		die("PulseAudio failed to start main loop.");
 }

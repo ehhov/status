@@ -69,7 +69,7 @@ layout_start(void *fd)
 	fds[0].events = POLLIN;
 	fds[1].fd = *(int *)fd;
 	fds[1].events = POLLIN;
-	
+
 	while (!done) {
 		poll(fds, 2, -1);
 		while (XPending(d)) {

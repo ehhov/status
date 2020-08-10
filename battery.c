@@ -6,11 +6,11 @@ extern const char *retprintf(const char *fmt, ...);
 
 const char *battery(const char *bat);
 int battery_percent(void); /* only for tint2 */
-static void readvar(const char *bat, const char *name, const char *fmt, void *var);
+static int readvar(const char *bat, const char *name, const char *fmt, void *var);
 
 static int percent; /* only for tint2 */
 
-static void
+static int
 readvar(const char *bat, const char *name, const char *fmt, void *var)
 {
 	FILE *file;
@@ -19,10 +19,11 @@ readvar(const char *bat, const char *name, const char *fmt, void *var)
 	snprintf(path, sizeof(path), "/sys/class/power_supply/%s/%s", bat, name);
 	if (!(file = fopen(path, "r"))) {
 		die("File does not exist: %s. Check the argument: %s.", path, bat);
-		return;
+		return 1;
 	}
 	fscanf(file, fmt, var);
 	fclose(file);
+	return 0;
 }
 
 const char *
@@ -31,10 +32,11 @@ battery(const char *bat)
 	int now, full, current;
 	char chr[12];
 
-	readvar(bat, "charge_now", "%d", &now);
-	readvar(bat, "charge_full", "%d", &full);
-	readvar(bat, "current_now", "%d", &current);
-	readvar(bat, "status", "%12s", chr);
+	if (readvar(bat, "charge_now", "%d", &now) \
+	   || readvar(bat, "charge_full", "%d", &full) \
+	   || readvar(bat, "current_now", "%d", &current) \
+	   || readvar(bat, "status", "%12s", chr))
+		return NULL;
 
 	if (chr[0] == 'F')
 		strcpy(chr, " Charged");

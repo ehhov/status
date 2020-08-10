@@ -13,9 +13,9 @@ extern const char *retprintf(const char *fmt, ...);
 
 const char *netspeed(const char *wlan);
 const char *essid(const char *wlan);
-static void readvar(const char *wlan, const char *name, const char *fmt, void *var);
+static int readvar(const char *wlan, const char *name, const char *fmt, void *var);
 
-static void
+static int
 readvar(const char *wlan, const char *name, const char *fmt, void *var)
 {
 	FILE *file;
@@ -24,10 +24,11 @@ readvar(const char *wlan, const char *name, const char *fmt, void *var)
 	snprintf(path, sizeof(path), "/sys/class/net/%s/statistics/%s", wlan, name);
 	if (!(file = fopen(path, "r"))) {
 		die("File does not exist: %s. Check the argument: %s.", path, wlan);
-		return;
+		return 1;
 	}
 	fscanf(file, fmt, var);
 	fclose(file);
+	return 0;
 }
 
 const char *
@@ -38,8 +39,9 @@ netspeed(const char *wlan)
 
 	old = now; in1 = in2; out1 = out2;
 	clock_gettime(CLOCK_MONOTONIC, &now);
-	readvar(wlan, "rx_bytes", "%ld", &in2);
-	readvar(wlan, "tx_bytes", "%ld", &out2);
+	if (readvar(wlan, "rx_bytes", "%ld", &in2) \
+	   || readvar(wlan, "tx_bytes", "%ld", &out2))
+		return NULL;
 
 	return retprintf("%.2lf↓↑%.2lf", ((in2 - in1)>>10) / 1024.0 \
 	    / (now.tv_sec + now.tv_nsec*1e-9 - old.tv_sec - old.tv_nsec*1e-9), \

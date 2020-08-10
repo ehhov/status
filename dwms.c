@@ -43,8 +43,6 @@ die(const char *fmt, ...)
 
 	putc('\n', stderr);
 	done = -1;
-	refresh(1);
-	refresh(0);
 }
 
 const char *
@@ -67,7 +65,8 @@ waitsignals(void *sigset)
 	int signal;
 
 	sigwait(sigset, &signal);
-	done = 1;
+	if (!done)
+		done = 1;
 	refresh(1);
 	refresh(0);
 	return NULL;
@@ -131,7 +130,6 @@ main()
 
 	if (!(dpy = XOpenDisplay(NULL))) {
 		fputs("Failed to open display.\n", stderr);
-		pthread_kill(sig_thread, SIGTERM);
 		done = -1;
 		goto join;
 	}
@@ -160,6 +158,7 @@ main()
 		XStoreName(dpy, root, status);
 		XFlush(dpy);
 
+		if (done) break;
 		clock_gettime(CLOCK_REALTIME, &wait);
 		wait.tv_sec += interval - wait.tv_sec % interval;
 		wait.tv_nsec = 0;
@@ -175,6 +174,7 @@ join:
 	close(pipefd[0]);
 	close(pipefd[1]);
 	volume_stop();
+	pthread_kill(sig_thread, SIGTERM);
 	pthread_join(kb_thread, NULL);
 	pthread_join(sig_thread, NULL);
 
