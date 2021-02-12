@@ -1,4 +1,4 @@
-PREFIX = /opt/local
+PREFIX = /usr/local
 
 CC = cc
 LIBS = -lX11 -lpthread -lpulse
